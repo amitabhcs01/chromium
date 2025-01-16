@@ -24,8 +24,17 @@ import org.chromium.content_public.browser.MessagePort;
 @JNINamespace("android_webview")
 public class WebMessageListenerHolder {
     private final WebMessageListener mListener;
+    
+    /**
+     * Constructor to initialize the WebMessageListener.
+     * 
+     * @param listener The WebMessageListener instance to hold.
+     */
 
-    public WebMessageListenerHolder(@NonNull WebMessageListener listener) {
+   public WebMessageListenerHolder(@NonNull WebMessageListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("WebMessageListener cannot be null");
+        }
         mListener = listener;
     }
 
@@ -37,18 +46,31 @@ public class WebMessageListenerHolder {
             boolean isMainFrame,
             MessagePort[] ports,
             JsReplyProxy replyProxy) {
+         // Post the message to the current looper/thread
         AwThreadUtils.postToCurrentLooper(
                 () -> {
-                    mListener.onPostMessage(
-                            payload,
-                            Uri.parse(topLevelOrigin),
-                            Uri.parse(sourceOrigin),
-                            isMainFrame,
-                            replyProxy,
-                            ports);
+     // Ensure mListener is not null before invoking methods on it
+
+                   if (mListener != null) {
+                        mListener.onPostMessage(
+                                payload,
+                                Uri.parse(topLevelOrigin),
+                                Uri.parse(sourceOrigin),
+                                isMainFrame,
+                                replyProxy,
+                                ports);
+                    } else {
+                        // Log an error if mListener is null (this should not normally happen)
+                        // Add logging mechanism as needed
+                    }
                 });
     }
 
+    /**
+     * Returns the WebMessageListener instance held by this class.
+     * 
+     * @return The WebMessageListener instance.
+     */
     public WebMessageListener getListener() {
         return mListener;
     }
